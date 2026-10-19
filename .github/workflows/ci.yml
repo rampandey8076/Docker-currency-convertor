@@ -70,3 +70,11 @@ jobs:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK"
 
+      - name: Notify Telegram
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MESSAGE=$(printf '✅ Currency Converter: Render accepted the deployment request.\nRepository: %s\nBranch: main\nCommit: %.7s\nWebsite: https://docker-currency-convertor.onrender.com/' "$GITHUB_REPOSITORY" "$GITHUB_SHA")
+          curl --fail --silent --show-error --request POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MESSAGE}"
